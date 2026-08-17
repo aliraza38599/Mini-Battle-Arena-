@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mini Battle - 2 Player Games</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eaf5fb;color:#17324d;min-height:100vh}
+button{font:inherit;border:0;cursor:pointer}
+#app{max-width:760px;margin:auto;min-height:100vh;background:#eef8fc}
+header{padding:22px 18px 12px;text-align:center;background:white;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px #0001}
+h1{margin:0;font-size:34px;color:#24587e}
+.sub{margin-top:5px;color:#7591a5;font-weight:700}
+.screen{padding:16px}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:white;border-radius:24px;padding:0;overflow:hidden;box-shadow:0 5px 16px #24587e18;border:3px solid #fff}
+.card .pic{height:145px;display:flex;align-items:center;justify-content:center;font-size:70px}
+.card .name{padding:15px;text-align:center;font-weight:900;font-size:19px;color:white}
+.c1 .pic{background:#7bd9ee}.c1 .name{background:#244f9d}
+.c2 .pic{background:#ffc4ca}.c2 .name{background:#d94f61}
+.c3 .pic{background:#ffd76e}.c3 .name{background:#b66a2d}
+.c4 .pic{background:#a9e8a0}.c4 .name{background:#2c8b50}
+.c5 .pic{background:#bfc9ff}.c5 .name{background:#4b55aa}
+.c6 .pic{background:#ffd2a6}.c6 .name{background:#8b4c8b}
+.back{background:#d7e8f2;color:#24587e;padding:10px 15px;border-radius:14px;font-weight:900;margin-bottom:12px}
+.gamebox{background:white;border-radius:25px;padding:18px;box-shadow:0 5px 18px #24587e18;text-align:center}
+h2{margin:5px 0 8px;font-size:27px}
+.info{color:#6d8494;font-weight:700;margin-bottom:15px}
+.scores{display:flex;justify-content:space-between;gap:10px;margin:12px 0}
+.score{flex:1;border-radius:18px;padding:12px;background:#f1f7fb;font-size:20px;font-weight:900}
+.p1{color:#e65059}.p2{color:#129ed1}
+.bigbtn{width:100%;min-height:170px;border-radius:24px;background:#245a9e;color:white;font-size:38px;font-weight:900;touch-action:manipulation}
+.bigbtn:active{transform:scale(.98)}
+.row{display:flex;gap:12px}.row button{flex:1;padding:18px;border-radius:18px;font-weight:900}
+.red{background:#ed5b63;color:white}.blue{background:#15a9d9;color:white}
+.gray{background:#e6eef3;color:#244d68}
+.ad{margin:16px auto;padding:10px;border:2px dashed #a9bbc6;background:#f7fbfd;border-radius:14px;text-align:center;color:#8296a3;font-size:12px}
+.ad strong{display:block;font-size:13px;color:#5e7482;margin-bottom:5px}
+#arena{height:330px;position:relative;background:#dff3ff;border-radius:22px;overflow:hidden;touch-action:none}
+.dot{position:absolute;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:white}
+#d1{background:#ed5b63;left:20px;bottom:20px}#d2{background:#15a9d9;right:20px;bottom:20px}
+.target{position:absolute;width:58px;height:58px;border-radius:50%;background:#ffd447;border:7px solid #e85b52;box-shadow:0 3px 8px #0002}
+.memory{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;max-width:440px;margin:auto}
+.tile{aspect-ratio:1;border-radius:14px;background:#345b9d;color:white;font-size:30px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.tile.open{background:#f5c95a;color:#513e13}.tile.done{background:#77c987}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice button{padding:30px;border-radius:20px;font-size:25px;font-weight:900;color:white}
+.notice{font-weight:800;color:#506f83;min-height:28px;margin:8px}
+.footer{padding:20px;text-align:center;color:#7892a3;font-size:12px}
+@media(max-width:480px){.menu{gap:10px}.card .pic{height:120px;font-size:55px}.card .name{font-size:16px;padding:12px}.screen{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>🎮 MINI BATTLE</h1><div class="sub">Offline • 2 Players • No Internet Needed</div></header>
+<div id="screen" class="screen"></div>
+<div class="footer">Made as a single-file offline game</div>
+</div>
+
+<script>
+const games=[
+ ["tap","⚡","TAP RUSH","c1"],["draw","🎯","QUICK DRAW","c2"],["memory","🧠","MEMORY MATCH","c3"],
+ ["target","🏌️","TARGET HIT","c4"],["dodge","💥","DODGE ARENA","c5"],["color","🎨","GUESS COLOR","c6"]
+];
+let p1=0,p2=0,round=1,timer=null,cleanup=null;
+
+function menu(){
+ cleanup&&cleanup(); clearTimeout(timer); clearInterval(timer);
+ document.getElementById('screen').innerHTML=`<div class="menu">${games.map(g=>`
+ <button class="card ${g[3]}" onclick="start('${g[0]}')"><div class="pic">${g[1]}</div><div class="name">${g[2]}</div></button>`).join('')}</div>
+ <div class="ad"><strong>ADVERTISEMENT</strong>Offline ad space • Real ads require an internet connection.</div>
+ <div class="gamebox"><b>Score:</b> <span class="p1">P1 ${p1}</span> &nbsp; <span class="p2">P2 ${p2}</span>
+ <div class="row" style="margin-top:12px"><button class="gray" onclick="resetScore()">RESET SCORE</button></div></div>`;
+}
+function resetScore(){p1=p2=0;menu()}
+function shell(title,desc){
+ document.getElementById('screen').innerHTML=`<button class="back" onclick="menu()">← MENU</button>
+ <div class="gamebox"><h2>${title}</h2><div class="info">${desc}</div><div id="game"></div></div>
+ <div class="ad"><strong>ADVERTISEMENT</strong>Offline ad space • Real ad networks cannot load without internet.</div>`;
+}
+function finish(who){
+ if(who===1)p1++;else if(who===2)p2++;
+ const el=document.getElementById('game'); if(el) el.insertAdjacentHTML('beforeend',`<div class="notice">🏆 Player ${who} wins this round!</div><button class="gray" style="padding:14px;border-radius:14px;font-weight:900" onclick="start('${current}')">NEXT ROUND</button>`);
+}
+let current="";
+function start(type){current=type; if(type==="tap")tap(); if(type==="draw")draw(); if(type==="memory")memory(); if(type==="target")target(); if(type==="dodge")dodge(); if(type==="color")color();}
+
+function tap(){
+ shell("⚡ TAP RUSH","Tap your button as many times as possible in 10 seconds.");
+ let a=0,b=0,t=10;
+ document.getElementById('game').innerHTML=`<div class="scores"><div class="score p1">P1: <span id="a">0</span></div><div class="score p2">P2: <span id="b">0</span></div></div>
+ <div class="row"><button class="bigbtn" style="background:#ed5b63" id="ta">P1 TAP</button><button class="bigbtn" style="background:#15a9d9" id="tb">P2 TAP</button></div><div class="notice">Time: <span id="tm">10</span>s</div>`;
+ ta.onclick=()=>{a++;document.getElementById('a').textContent=a};tb.onclick=()=>{b++;document.getElementById('b').textContent=b};
+ timer=setInterval(()=>{t--;tm.textContent=t;if(t<=0){clearInterval(timer);finish(a>b?1:b>a?2:0)}},1000);
+}
+function draw(){
+ shell("🎯 QUICK DRAW","Wait for GO! Then tap your own button first. Don't tap early.");
+ let ready=false,done=false;
+ document.getElementById('game').innerHTML=`<div class="bigbtn" id="signal">WAIT...</div><div class="row" style="margin-top:12px"><button class="red" id="da">P1 DRAW</button><button class="blue" id="db">P2 DRAW</button></div><div class="notice" id="msg">Get ready...</div>`;
+ let delay=1000+Math.random()*3500; timer=setTimeout(()=>{ready=true;signal.textContent="GO!";signal.style.background="#43b86b";msg.textContent="DRAW NOW!"},delay);
+ function shoot(n){if(done)return;if(!ready){done=true;clearTimeout(timer);msg.textContent="❌ Player "+n+" tapped too early!";finish(n===1?2:1);return}done=true;finish(n)}
+ da.onclick=()=>shoot(1);db.onclick=()=>shoot(2);
+}
+function memory(){
+ shell("🧠 MEMORY MATCH","Find matching pairs. Players take turns; most pairs wins.");
+ let vals=["🍎","🍎","🍕","🍕","🚗","🚗","⭐","⭐","🐶","🐶","⚽","⚽","🍔","🍔","🚀","🚀"].sort(()=>Math.random()-.5);
+ let open=[],matched=0,turn=1,s1=0,s2=0;
+ document.getElementById('game').innerHTML=`<div class="scores"><div class="score p1">P1: <span id="ms1">0</span></div><div class="score p2">P2: <span id="ms2">0</span></div></div><div class="memory" id="mem">${vals.map((v,i)=>`<button class="tile" data-i="${i}">?</button>`).join("")}</div><div class="notice" id="mm">P1's turn</div>`;
+ [...mem.children].forEach(btn=>btn.onclick=()=>{
+  let i=+btn.dataset.i;if(btn.classList.contains("open")||btn.classList.contains("done")||open.length>=2)return;
+  btn.classList.add("open");btn.textContent=vals[i];open.push({i,btn});
+  if(open.length===2){let [x,y]=open;if(vals[x.i]===vals[y.i]){x.btn.classList.add("done");y.btn.classList.add("done");matched+=2;if(turn===1)ms1.textContent=++s1;else ms2.textContent=++s2;open=[];if(matched===16)finish(s1>s2?1:s2>s1?2:0)}else{setTimeout(()=>{x.btn.classList.remove("open");y.btn.classList.remove("open");x.btn.textContent=y.btn.textContent="?";open=[];turn=turn===1?2:1;mm.textContent="P"+turn+"'s turn"},650)}}
+ });
+}
+function target(){
+ shell("🏌️ TARGET HIT","Hit 10 moving targets. Each player gets 5 shots.");
+ let score=[0,0],shots=[0,0],turn=0;
+ document.getElementById('game').innerHTML=`<div class="scores"><div class="score p1">P1: <span id="ts1">0</span></div><div class="score p2">P2: <span id="ts2">0</span></div></div><div id="arena"><button class="target" id="tg">🎯</button></div><div class="notice" id="tt">P1: hit the target!</div>`;
+ function move(){tg.style.left=Math.random()*78+"%";tg.style.top=Math.random()*70+"%"}
+ move();tg.onclick=()=>{score[turn]++;shots[turn]++;document.getElementById(turn?"ts2":"ts1").textContent=score[turn];next()};
+ function next(){if(shots[turn]>=5){turn=1;if(shots[1]>=5){finish(score[0]>score[1]?1:score[1]>score[0]?2:0);return}}else turn=turn;tt.textContent="P"+(turn+1)+": "+(5-shots[turn])+" shots left";move()}
+}
+function dodge(){
+ shell("💥 DODGE ARENA","Move your player to avoid falling blocks. Last player alive wins.");
+ document.getElementById('game').innerHTML=`<div class="scores"><div class="score p1">P1: <span id="life1">❤️</span></div><div class="score p2">P2: <span id="life2">❤️</span></div></div><div id="arena"><div class="dot" id="d1">P1</div><div class="dot" id="d2">P2</div></div><div class="notice">P1: A/D &nbsp; • &nbsp; P2: ←/→</div>`;
+ let x1=20,x2=80,alive=[true,true],blocks=[];
+ function add(){let b=document.createElement("div");b.className="target";b.style.background="#555";b.style.border="0";b.style.width="34px";b.style.height="34px";b.style.left=Math.random()*92+"%";b.style.top="-40px";arena.appendChild(b);blocks.push(b)}
+ timer=setInterval(()=>{add();blocks.forEach(b=>{b.style.top=(parseFloat(b.style.top)+8)+"px";let r=b.getBoundingClientRect();for(let i=0;i<2;i++){let d=(i?d2:d1).getBoundingClientRect();if(alive[i]&&r.left<d.right&&r.right>d.left&&r.top<d.bottom&&r.bottom>d.top){alive[i]=false;document.getElementById(i?"life2":"life1").textContent="💀";(i?d2:d1).style.opacity=.3}}if(parseFloat(b.style.top)>360)b.remove()});if(!alive[0]||!alive[1]){clearInterval(timer);finish(alive[0]?1:2)}},350);
+ function key(e){if(e.key==="a")x1=Math.max(0,x1-5);if(e.key==="d")x1=Math.min(88,x1+5);if(e.key==="ArrowLeft")x2=Math.max(0,x2-5);if(e.key==="ArrowRight")x2=Math.min(88,x2+5);d1.style.left=x1+"%";d2.style.left=x2+"%"};addEventListener("keydown",key);cleanup=()=>removeEventListener("keydown",key);
+}
+function color(){
+ shell("🎨 GUESS COLOR","A color name appears. First player to choose the correct color wins.");
+ const cols=[["RED","#ed5b63"],["BLUE","#15a9d9"],["GREEN","#4db66a"],["YELLOW","#e7bd3c"]];
+ let answer;
+ function round(){answer=cols[Math.floor(Math.random()*cols.length)];document.getElementById('game').innerHTML=`<div class="bigbtn" style="background:${answer[1]};margin-bottom:14px">${answer[0]}</div><div class="choice">${cols.map(c=>`<button style="background:${c[1]}" onclick="guess('${c[0]}')">${c[0]}</button>`).join("")}</div><div class="notice">First correct answer wins!</div>`}
+ window.guess=n=>{if(n===answer[0])finish(Math.random()<.5?1:2);else document.querySelector('.notice').textContent="Wrong! Try again.";};round();
+}
+menu();
+</script>
+</body>
+</html>
